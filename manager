@@ -1,0 +1,18 @@
+#!/bin/sh
+clear
+
+#ARRAY FOR DB
+array=()
+
+#SOURCE ALL SCRIPTS TO ACCESS FUNCTIONS
+source ./tools
+source ./ui
+source ./addrecord
+source ./findrecord
+source ./updaterecord
+source ./removerecord
+#CALL TO FUNCTION IN ./TOOLS
+setup
+
+#CALL TO FUNCTION IN ./UI
+displayMenu
