@@ -1,0 +1,183 @@
+#!/bin/sh
+
+#DISPLAY MAIN MENU
+displayMenu() {
+   
+   IFS= read -r -p "Welcome to my contact database, please select in the following menu:
+(a) Find a record
+(b) Add a new record
+(c) Update a record
+(d) Remove a record
+(e) Quit
+> Selection is : " userchoice
+
+   #call function located in ./tools
+   menuController $userchoice
+}
+
+#UI FOR VERIFYING CONTACT INFORMATION BEFORE PROCEEDING
+verifyEntry() {
+   printf "\n***VERIFY CONTACT***\n\n"
+
+   #CALL FUNCTION IN ./UI
+   displayContact "$1"
+
+   read -r -p "
+
+1: Save entry
+2: Make Changes
+> " input
+
+   #RETURNS CHOICE TO CALLER TO EITHER SAVE OR MAKE CHANGES
+   case "$input" in
+   1|2 ) return $input ;;
+   * ) clear
+       printf "\n***INVALID INPUT***\n\n"
+
+       #RECURSIVE CALL TO SELF IF INVALID INPUT
+       verifyEntry "$1"
+   esac
+}
+
+#DISPLAY CONTACT DETAILS
+#  takes in string format
+#  "name:address:phone:email"
+displayContact() {
+   IFS=: read -r name address phone email <<< "$1"   
+   printf "\tName: %s\n\tAddress: %s\n\tPhone: %s\n\tEmail: %s\n" "$name" "$address" "$phone" "$email"
+}
+
+###########################SEARCH UI ###############################
+
+#SEARCH MENU PROMPT USER FOR THEIR SEARCH PREFERENCES
+searchMenu() {
+   searchresults=()
+   IFS= read -r -p "Search record by:
+1) Name
+2) Address
+3) Phone
+4) Email
+5) Keyword
+6) Exit Search
+> " input
+
+   #call function in ./findrecord
+   searchBy "$input"
+}
+
+#DISPLAY SEARCH RESULTS
+displaySearchResults() {
+
+if [[ "${#searchresults[@]}" == 0 ]]; then
+   printf "\n\nNo results matched '$1'\n\n "
+   searchAgainPrompt
+else
+   count=1
+   for i in "${searchresults[@]}"
+     do
+        printf "\n%s" "$count"
+        displayContact "$i"
+        count=$((count+1))
+     done
+     read -r -p "Select contact or
+a) Search again
+b) Exit Search
+> " input
+     if [[ "$input" == a ]] ; then
+        clear
+        searchMenu
+     elif [[ "$input" == b ]] ; then
+         clear
+         displayMenu
+     elif [ $input -le $(( count-1)) ] ; then
+         clear
+         printf "\n\n"
+         displayContact "${searchresults[$((input-1))]}"
+          #CALL FUNCTION IN ./TOOLS
+         contactOptions "${searchresults[$((input-1))]}"
+     else
+         clear
+         printf "\n\n***INVALID INPUT***\n\n"
+         displaySearchResults
+     fi
+fi
+}
+
+#PROMPT USER TO SEARCH AGAIN
+searchAgainPrompt() {
+   read -r -p "
+
+Search again? (Y|N)
+> " input
+   shopt -s nocasematch
+   case "$input" in
+   n|no|nah|nope|na ) clear
+      displayMenu ;;
+   y|ya|yes|yep|yas ) clear
+      searchMenu ;;
+   * ) clear
+       printf "***INVALID INPUT***\nTry again..."
+      searchAgainPrompt ;;
+esac
+}
+
+###########################UPDATE UI##############################
+#function receives entry to update as $1
+# $1 - original entry to update
+# $2 optional, if updating their update
+getUpdateField(){
+
+
+   IFS=: read -r name address phone email <<< "$1"
+   printf "\n\n***UPDATE RECORD***\n\n"
+
+   #check number of arguments to determine what to display
+   if [[ "$#" == 2 ]] ; then
+      displayContact "$2"
+   else
+      displayContact "$1"
+   fi
+
+   printf "1) Name\n2) Address\n3) Phone\n4) Email\n"
+   if [[ "${FUNCNAME[0]}" == "${FUNCNAME[3]}" ]]; then
+      printf "5) Save Changes\n"
+    #TODO check if coming from addrecord
+   elif [[ "${FUNCNAME[2]}" == "displaySearchResults" ]] ; then
+      printf "5) Back to search results\n"
+   fi
+
+   printf "0) Exit WITHOUT saving\n>"
+
+   read choice
+   if [[ "$choice" == 5 ]] ; then
+      if [[ "${FUNCNAME[0]}" == "${FUNCNAME[3]}" ]]; then
+         choice=6
+      elif [[ "${FUNCNAME[2]}" == "displaySearchResults" ]] ; then
+         choice=5
+      fi
+   fi   
+
+   #calling function ./updaterecord
+   if [[ "$#" == 2 ]]; then
+      updateBy "$choice" "$1" "$2"
+   else
+      updateBy "$choice" "$1" 
+   fi
+}
+
+
+#UX FOR SAVING CHANGES
+vizSave() {
+   clear
+   printf "\n\nSaving changes"
+
+   for i in 1 2 3
+   do
+      printf "."
+      sleep .5
+   done
+   
+   clear
+   printf "\n\nChanges Saved\n\n"
+}
+
