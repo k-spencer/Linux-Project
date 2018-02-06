@@ -1,0 +1,74 @@
+#!/bin/sh
+
+#FUNCTION TAKES WHAT USER IS SEARCHING BY FROM SEARCH MENU
+#AND PROMPTS FOR CORRESPONDING QUERY
+searchBy() { 
+case "$1" in
+   1 ) clear
+       IFS= read -r -p "Enter name: " searchQuery  
+       startSearch 0 "$searchQuery" ;;
+   2 ) clear 
+       IFS= read -r -p "Enter Address: " searchQuery
+       startSearch 1 "$searchQuery"  ;;
+   3 ) clear 
+       IFS= read -r -p "Enter phone: " searchQuery
+       startSearch 2 "$searchQuery"  ;;
+   4 ) clear
+       IFS= read -r -p "Enter email: " searchQuery
+       startSearch 3 "$searchQuery" ;;
+   5 ) clear
+       IFS= read -r -p "Enter keyword: " searchQuery
+       startSearch 4 "$searchQuery" ;;
+   6 ) clear
+       displayMenu ;;
+   * ) clear 
+       printf "\n***INVALID INPUT***\n\n"
+       searchMenu ;;
+esac
+}
+
+#FUNCTION THAT TAKES INT FOR HOW THEY ARE SEARCHING BY
+#AND QUERY AS THE SECOND ARGUMENT SETS searchresults
+startSearch() {
+for i in "${array[@]}"
+   do
+      #if 4, they are searching by keyword, therefore look at full string
+      if [[ "$1" == 4 ]] ; then
+         IFS= read -r temp <<< "$i" 
+         shopt -s nocasematch
+         if [[ "${temp}" == *"$2"* ]] ; then
+            searchresults+=("$i")
+         fi
+      #else search by field
+      else
+         IFS=: read -r -a temp <<< "$i"
+         shopt -s nocasematch
+         if [[ "${temp[$1]}" == *"$2"* ]]; then
+            searchresults+=("$i")
+         fi
+      fi
+   done
+   #call function and display search results of query 
+   displaySearchResults "$2"
+}
+
+#SEARCH BY FULL ENTRY
+#   returns 0 if it exists
+#   else it returns 1 if there is no entry like it
+#   sets $index to appropriate value
+entryExistsChecker() {
+   count=0
+   for i in "${array[@]}"
+   do
+       shopt -s nocasematch
+       if [[ "$1" == "$i" ]]; then
+          index=$count
+          return 0
+       else
+          index=-1
+       fi
+       count=$((count+1))
+   done
+   return 1
+}
+
