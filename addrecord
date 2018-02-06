@@ -1,0 +1,73 @@
+#!/bin/sh
+
+getEntryData() {
+   user=""
+   clear
+   printf "\n***ADDING A NEW RECORD***\n\n"
+
+#Prompt user for input
+   IFS= read -r -p "Enter full name: " input
+until validateInput 1 "$input"; do
+   IFS= read -r -p "Enter full name: " input	   
+done
+
+  user="$user$input:"
+
+
+   IFS= read -r -p "Enter address: " input
+until validateInput 2 "$input"; do
+   IFS= read -r -p "Enter address: " input
+done
+ 
+  user="$user$input:"
+
+   IFS= read -r -p "Enter phone number: " input
+until validateInput 3 "$input"; do
+   IFS= read -r -p "Enter phone number: " input
+done
+ 
+  user="$user$input:"
+
+   IFS= read -r -p "Enter email address: " input
+until validateInput 4 "$input"; do
+   IFS= read -r -p "Enter email address: " input
+done
+  
+  user="$user$input:"
+
+
+   clear
+   processAdding "$user"
+}
+
+processAdding() {
+verifyEntry "$1"
+
+   if [[ $? -eq 2 ]]; then
+      clear
+      #CALL TO UPDATERECORD SCRIPT
+      getUpdateField "$1"
+   elif [[ $? -eq 1 ]]; then
+
+       #CALL FUNCTION IN FIND RECORD THAT TAKES IN WHOLE STRING
+       #TO SEE IF THAT USER ALREADY EXISTS
+      entryExistsChecker "$1"
+
+      if [[ $? -eq 0 ]]; then
+         clear
+         printf "\n\nUser already exists...\n\n"
+         processAdding "$1"
+      else
+         array+=("$1")
+         dbwrite
+         clear
+         printf "\n***SUCCESSFULLY ADDED CONTACT***\n\n"
+         displayContact "$1"
+         read -n 1 -s -p "
+
+Press any key to continue.."
+         clear
+         displayMenu
+      fi
+   fi
+}
