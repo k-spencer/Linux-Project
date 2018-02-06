@@ -1,0 +1,102 @@
+#!/bin/sh
+
+#FUNCTION TAKES WHAT FIELD USER IS UPDATING FROM GETUPDATEFIELD
+#AND PROMPTS THEM FOR CORRESPONDING QUERY
+# $1 - choice
+# $2 - entry
+# $3 - optional third entry carrying new entry info
+updateBy() {
+
+case "$1" in
+   0 ) clear
+       printf "\nNo Changes Made\n\n"
+       displayMenu ;;
+
+   1 ) printf "\nEnter new Name: "  
+       read update
+       until validateInput 1 "$update"; do
+      	 printf "\nEnter new Name: "
+      	 read update
+       done
+       name=$update ;;
+
+   2 ) printf "\nEnter new Address: " 
+       read update
+       until validateInput 2 "$update"; do
+         printf "\nEnter new Address: "
+         read update
+       done
+       address=$update ;;
+
+   3 ) printf "\nEnter new Phone Number: "
+       read update
+       until validateInput 3 "$update"; do
+         printf "\nEnter new Phone Number: "
+         read update
+       done
+       phone=$update ;;
+
+   4 ) printf  "\nEnter new Email: "
+       read update
+       until validateInput 4 "$update"; do
+         printf "\nEnter new Email: "
+         read update
+       done
+       email=$update ;;
+
+   5 ) clear
+        displaySearchResults ;;
+   6 ) echo "Saving changed updated thing" ;;
+   * ) clear
+        printf "\nInvalid input" 
+       # determine how to call getUpdateField function
+       if [[ "$#" == 2 ]]; then
+          getUpdateField "$2" 
+       else
+          updateRecord "$2" "$3"
+       fi ;;
+esac
+
+   updatedContact="$name:$address:$phone:$email"
+
+   #function call passes old entry and new entry
+   processUpdate "$2" "$updatedContact"
+}
+
+#FUNCTION PROCESS UPDATE takes old and new entry
+processUpdate() {
+   clear
+   verifyEntry "$2"
+
+   case "$?" in
+      1 ) #TODO if updatedInfo is in DB already do not call findandUpdate
+         entryExistsChecker "$2"
+         if [ $? -eq 1 ] ; then
+            entryExistsChecker "$1"
+            if [ $? -eq 0 ] ; then
+               echo "this is the index of what to update $index"
+               array[$((index))]="$2"
+               dbwrite
+            elif [ $? -eq 1 ] ; then
+               echo "adding new contact"
+               array+=("$2")
+               dbwrite
+               clear
+               printf "\n***SUCCESSFULLY ADDED CONTACT***\n\n"
+               displayContact "$2"
+               read -n 1 -s -p "
+Press any key to continue..."
+               clear
+               displayMenu
+            fi
+         else
+            clear
+            printf "***USER ALREADY EXISTS***"
+            getUpdateField "$2"
+         fi
+         displayMenu ;;
+      2 ) clear 
+          getUpdateField "$1" "$2" ;;
+      * ) echo "unknown error" ;;
+   esac
+}
