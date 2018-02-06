@@ -1,0 +1,21 @@
+#!/bin/sh
+
+#This script is used to remove a record from the database array
+#It receives a string from it's caller to remove from the array
+
+deleteRecord() {
+
+entryExistsChecker "$1"
+
+if [[ $? -eq 0 ]] ; then
+   unset array[$(( index ))]
+   dbwrite
+   printf "\n\n***SUCCESSFULLY DELETED***\n\n"
+   displayMenu
+else
+   printf "\n\n***DELETE UNSUCCESSFUL***\n\n"
+   displayMenu
+fi
+}
+
+ 
